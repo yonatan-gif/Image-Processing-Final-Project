@@ -221,13 +221,13 @@ python scripts/run_segmentation.py    # Task 2 (MPS/GPU)
 | 2 | Dataset/distortions/tasks table with links | ✔ §1 |
 | 3 | Methods/enhancements table with links | ✔ §2 |
 | 4 | Download + EDA + annotated grid | ✔ §3, `scripts/eda.py` |
-| 5–6 | Run on clean data + measure (per class) | ✔ Task 3 · ✔ Task 1 baseline (Top-1 = 0.93) · ◻ Task 2 baseline |
+| 5–6 | Run on clean data + measure (per class) | ✔ all 3 tasks (cls 0.93, seg 0.92, SIFT) |
 | 7 | Apply distortions + before/after | ✔ `src/distortions`, grids |
-| 8 | Measure degradation | ✔ Task 3 · ✔ Task 1 · ◻ Task 2 |
-| 9 | Apply enhancements + measure | ✔ Task 3 · ✔ Task 1 · ◻ Task 2 |
-| 10–11 | Fine-tune + measure | ◻ in progress (improvement #2) |
+| 8 | Measure degradation | ✔ all 3 tasks |
+| 9 | Apply enhancements + measure | ✔ all 3 tasks |
+| 10–11 | Fine-tune + measure | ✔ classification + segmentation (improvement #2) |
 | 12 | Polish README (de-AI pass) | ◻ scheduled last |
-| 13 | PPT/PDF + final repo review | ◻ |
+| 13 | PPT/PDF + final repo review | ◻ (slide draft in `docs/SLIDES.md`) |
 
 ---
 
@@ -259,14 +259,16 @@ matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
 
 | Distortion | level | repeatability (distorted → restored) | Δ recovery | matching (distorted → restored) |
 |---|---|---|---|---|
-| noise (σ) | 5 | 0.81 → 0.30 | **−0.51** | 0.76 → 0.25 |
-| noise (σ) | 20 | 0.53 → 0.38 | −0.15 | 0.38 → 0.29 |
-| noise (σ) | 80 | 0.22 → 0.23 | +0.01 | 0.11 → 0.11 |
-| blur (σ) | 0.5 | 0.78 → **0.88** | +0.10 | 0.74 → 0.72 |
-| blur (σ) | 1.0 | 0.44 → **0.86** | **+0.42** | 0.35 → **0.72** |
+| noise (σ) | 5 | 0.74 → 0.26 | **−0.48** | 0.74 → 0.25 |
+| noise (σ) | 20 | 0.46 → 0.37 | −0.09 | 0.35 → 0.30 |
+| noise (σ) | 80 | 0.21 → 0.21 | 0.00 | 0.10 → 0.11 |
+| blur (σ) | 0.5 | 0.74 → **0.83** | +0.08 | 0.74 → 0.72 |
+| blur (σ) | 1.0 | 0.38 → **0.80** | **+0.42** | 0.35 → **0.72** |
 | blur (σ) | 8.0 | 0.01 → 0.02 | +0.01 | 0.03 → 0.03 |
-| jpeg (q) | 90 | 0.86 → 0.49 | −0.37 | 0.84 → 0.42 |
-| jpeg (q) | 10 | 0.62 → 0.45 | −0.17 | 0.32 → 0.27 |
+| jpeg (q) | 90 | 0.83 → 0.45 | −0.38 | 0.84 → 0.42 |
+| jpeg (q) | 10 | 0.54 → 0.39 | −0.15 | 0.32 → 0.27 |
+
+*Repeatability uses one-to-one keypoint matching (τ = 3 px); seeded run.*
 
 <p>
 <img src="assets/keypoints_gaussian_noise.png" width="32%">
@@ -277,13 +279,13 @@ matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
 *Repeatability vs. intensity for noise / blur / JPEG; each plot shows distorted vs. restored.*
 
 Keypoints drawn on the image (`scripts/keypoints_viz.py`): **blur** erases them (559 → 21),
-while **noise** and **JPEG** spawn *spurious* unstable ones (559 → 633 / 678) — which is why
+while **noise** and **JPEG** spawn *spurious* unstable ones (559 → 661 / 678) — which is why
 both repeatability and matching collapse.
 
 ![Keypoint visualization](assets/keypoints_visual.png)
 
 **Key finding:** the matched cleaner helps only for **blur** (deblur restores repeatability from
-0.44 → 0.86 at σ=1). For **noise** and **JPEG**, classical cleaners (NLM, bilateral) *hurt*
+0.38 → 0.80 at σ=1). For **noise** and **JPEG**, classical cleaners (NLM, bilateral) *hurt*
 SIFT — they smooth away the fine texture keypoints sit on. Blind enhancement is not free for
 low-level feature tasks; it trades pixel-level fidelity for lost structure.
 
@@ -292,35 +294,63 @@ low-level feature tasks; it trades pixel-level fidelity for lost structure.
 Baseline (clean) Top-1 = **0.933** on 300 held-out val images (fine-tuned 5 epochs on 1,200
 clean images, Apple MPS).
 
-| Distortion | level | Top-1 (distorted → restored) | Δ recovery |
-|---|---|---|---|
-| noise (σ) | 5 | 0.93 → 0.70 | **−0.23** |
-| noise (σ) | 20 | 0.86 → 0.72 | −0.14 |
-| noise (σ) | 80 | 0.22 → 0.24 | +0.02 |
-| blur (σ) | 1.0 | 0.90 → 0.87 | −0.03 |
-| blur (σ) | 4.0 | 0.44 → **0.50** | +0.06 |
-| jpeg (q) | 50 | 0.90 → 0.87 | −0.03 |
-| jpeg (q) | 10 | 0.64 → 0.64 | 0.00 |
+Top-1 accuracy under each strategy (distorted vs. restored vs. fine-tuned on distorted data):
+
+| Distortion | level | distorted | restored | fine-tuned |
+|---|---|---|---|---|
+| noise (σ) | 5 | 0.93 | 0.70 | 0.90 |
+| noise (σ) | 20 | 0.86 | 0.72 | 0.90 |
+| noise (σ) | 80 | 0.22 | 0.24 | **0.75** |
+| blur (σ) | 1.0 | 0.90 | 0.87 | 0.90 |
+| blur (σ) | 4.0 | 0.44 | 0.50 | **0.79** |
+| jpeg (q) | 50 | 0.90 | 0.87 | 0.91 |
+| jpeg (q) | 10 | 0.64 | 0.64 | **0.82** |
 
 <p>
-<img src="assets/classification_gaussian_noise.png" width="32%">
-<img src="assets/classification_blur.png" width="32%">
-<img src="assets/classification_jpeg.png" width="32%">
+<img src="assets/classification_finetune_gaussian_noise.png" width="32%">
+<img src="assets/classification_finetune_blur.png" width="32%">
+<img src="assets/classification_finetune_jpeg.png" width="32%">
 </p>
 
-*Top-1 accuracy vs. intensity for noise / blur / JPEG; clean baseline, distorted, and restored.*
+*Top-1 vs. intensity for noise / blur / JPEG: distorted, restored, and fine-tuned.*
 
 **Findings.** (1) ResNet-50 is **robust to mild distortion** — accuracy barely moves for noise σ≤20,
-blur σ≤1, or JPEG q≥30, and collapses only at strong levels. (2) Blind classical restoration
-**mostly hurts**: NLM denoising drops σ=5 accuracy 0.93→0.70 (it erases the texture the model reads),
-and bilateral de-JPEG gives nothing back; only deblurring helps, and only at strong blur (σ=4:
-0.44→0.50). This matches the keypoints result — *enhancement tuned for human-visible quality is
-not tuned for the model.* Per-breed accuracy is in `results/classification_per_class.csv`
-(`assets/classification_per_class.png`).
+blur σ≤1, or JPEG q≥50, and collapses only at strong levels. (2) Blind classical restoration
+**mostly hurts**: NLM denoising drops σ=5 accuracy 0.93→0.70, and de-JPEG gives nothing back;
+only deblurring helps, and only at strong blur. (3) **Fine-tuning is decisively the best recovery**:
+at the worst levels it recovers what restoration cannot — noise σ=80 **0.22→0.75**, blur σ=8
+0.13→0.59, JPEG q=10 0.64→0.82.
+
+Per-breed accuracy (worst: Birman 0.62, best: Abyssinian 1.00):
+
+![Per-breed accuracy](assets/classification_per_class.png)
 
 ### Task 2 — DeepLabV3 segmentation (high-level, DL)
 
-_Filling in from the GPU batch (baseline mIoU ≈ 0.92 on the quick verify; full numbers + curves pending)._
+Baseline (clean) mIoU = **0.923** on 300 val images (fine-tuned 5 epochs on 1,200 clean images).
+
+| Distortion | level | distorted | restored | fine-tuned |
+|---|---|---|---|---|
+| noise (σ) | 5 | 0.923 | 0.901 | 0.912 |
+| noise (σ) | 20 | 0.906 | 0.896 | 0.907 |
+| noise (σ) | 80 | 0.627 | 0.621 | **0.865** |
+| blur (σ) | 1.0 | 0.916 | 0.921 | 0.910 |
+| blur (σ) | 8.0 | 0.791 | 0.799 | **0.833** |
+| jpeg (q) | 50 | 0.922 | 0.918 | 0.912 |
+| jpeg (q) | 10 | 0.847 | 0.873 | **0.891** |
+
+<p>
+<img src="assets/segmentation_gaussian_noise.png" width="32%">
+<img src="assets/segmentation_blur.png" width="32%">
+<img src="assets/segmentation_jpeg.png" width="32%">
+</p>
+
+*mIoU vs. intensity for noise / blur / JPEG; clean baseline, distorted, and restored.*
+
+**Findings.** Segmentation is the **most robust** task: mIoU holds ≥0.85 until the strongest
+levels and only noise σ=80 causes a large drop (0.923→0.627). Restoration is **roughly neutral**
+(small help at strong blur/JPEG, small harm at mild noise). **Fine-tuning again wins where it
+matters most** — noise σ=80 0.627→**0.865**, blur σ=8 0.791→0.833, JPEG q=10 0.847→0.891.
 
 ---
 
@@ -328,17 +358,29 @@ _Filling in from the GPU batch (baseline mIoU ≈ 0.92 on the quick verify; full
 
 **Robustness diverges with abstraction level.** Across the same distortions, fragility ranks
 SIFT keypoints (most fragile) → classification → segmentation (most robust). Fine local structure
-is destroyed first; region/shape labels survive far longer. Noise σ=80 takes SIFT repeatability to
-0.22 and ResNet-50 to 0.22 Top-1, while segmentation mIoU stays ≈0.75 — dense context is resilient.
+is destroyed first; region/shape labels survive longest. At noise σ=80, SIFT repeatability falls to
+0.21 and ResNet-50 to 0.22 Top-1, while segmentation mIoU — though it too drops — holds at 0.63.
 
 **Blind classical restoration is not free.** The Δ-recovery columns make this concrete: the matched
 cleaner helps only for **blur** (deblur re-adds attenuated high frequencies — repeatability +0.42 at
 σ=1). For **noise** and **JPEG**, NLM and bilateral filtering *smooth away* the exact detail the
-downstream task relies on, so recovery is often **negative** (SIFT −0.51 at σ=5; ResNet-50 −0.23 at
+downstream task relies on, so recovery is often **negative** (SIFT −0.48 at σ=5; ResNet-50 −0.23 at
 σ=5). Enhancement tuned for human-visible quality is not tuned for the algorithm consuming it.
 
-**Restoration vs. fine-tuning.** _Pending the fine-tune batch — we will report, per task and
-distortion, whether adapting the model beats cleaning the image, and where each strategy wins._
+**Restoration vs. fine-tuning — the headline result.** Fine-tuning the model on distorted data
+**beats restoration decisively**, and the gap is largest exactly where restoration fails — the
+strongest distortions:
 
-**Practical takeaway.** Match the recovery method to the *consumer*. Where classical restoration
-is harmful (noise, JPEG for feature/recognition tasks), model adaptation is the more promising lever.
+| Strongest level | distorted | restored | fine-tuned |
+|---|---|---|---|
+| Classification, noise σ=80 | 0.22 | 0.24 | **0.75** |
+| Classification, blur σ=8 | 0.13 | 0.13 | **0.59** |
+| Classification, JPEG q=10 | 0.64 | 0.64 | **0.82** |
+| Segmentation, noise σ=80 | 0.63 | 0.62 | **0.87** |
+
+At mild distortion the model is already robust so all three agree; at severe distortion restoration
+adds nothing while fine-tuning recovers most of the loss.
+
+**Practical takeaway.** Match the recovery method to the *consumer*. Blind classical enhancement
+tuned for the human eye can *hurt* the algorithm; **adapting the model** is the more reliable lever,
+especially under severe degradation.

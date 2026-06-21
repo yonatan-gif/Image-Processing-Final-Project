@@ -46,19 +46,20 @@ For each (task × distortion): **Baseline (clean) → Distorted (sweep) → Rest
 
 ## Slide 8 — Task 1: ResNet-50 classification (high-level)
 - Baseline Top-1 = 0.933. Robust to mild distortion; collapses only at strong levels.
-- Restoration mostly hurts (denoise 0.93→0.70 at σ=5); deblur helps at strong blur.
-- Fine-tune on distorted: _(pending — improvement #2)_.
-- Figures: `assets/classification_*.png`
+- Restoration mostly hurts (denoise 0.93→0.70 at σ=5); deblur helps only at strong blur.
+- **Fine-tune wins big**: noise σ=80 0.22→0.75, blur σ=8 0.13→0.59, JPEG q=10 0.64→0.82.
+- Figures: `assets/classification_finetune_*.png`, `assets/classification_per_class.png`
 
 ## Slide 9 — Task 2: DeepLabV3 segmentation (high-level)
-- Baseline mIoU ≈ 0.92. **More robust than classification** — shape survives better than texture.
+- Baseline mIoU = 0.923. **Most robust task** — shape survives better than texture.
 - Restoration roughly neutral; small help at strong blur/JPEG.
-- Fine-tune on distorted: _(pending — improvement #2)_.
+- **Fine-tune wins at severe levels**: noise σ=80 0.63→0.87, blur σ=8 0.79→0.83.
 
 ## Slide 10 — Cross-cutting finding
 - **Blind classical enhancement is not free.** Tuned for human-visible quality, it removes
   the fine detail models and detectors rely on → often *lowers* task performance.
-- **Fine-tuning vs restoration:** _(fill: which recovers more, per task/distortion)_.
+- **Fine-tuning beats restoration decisively**, and the gap is largest at the strongest
+  distortions (where restoration adds nothing): classification noise σ=80 0.24 vs **0.75**.
 
 ## Slide 11 — Conclusions
 - Robustness is task-dependent: dense/high-level (segmentation) > recognition > low-level features.
