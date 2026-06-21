@@ -28,7 +28,10 @@ sys.path.insert(0, str(ROOT))
 from src.data.pets import load_pets_classification, subset_split, PetClsDataset  # noqa: E402
 from src.distortions import DISTORTIONS  # noqa: E402
 from src.enhancements import ENHANCEMENTS  # noqa: E402
-from src.metrics import top1_accuracy  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+
+from src.metrics import top1_accuracy, per_class_accuracy  # noqa: E402
 from src.tasks.classification import build_model, preprocess, get_device, fit, predict  # noqa: E402
 from src.utils.ops import ImageOp  # noqa: E402
 from src.utils.viz import curve  # noqa: E402
@@ -76,6 +79,23 @@ def main() -> None:
     preds, labels = predict(model, loader_for(base, val_idx, pre, None, batch, workers), device)
     clean_acc = top1_accuracy(preds, labels)
     print(f"\nBaseline (clean) Top-1 = {clean_acc:.3f}  on {len(val_idx)} val images\n")
+
+    # Per-class (per-breed) accuracy on clean images — the required per-class axis.
+    num_classes = cfg["tasks"]["classification"]["num_classes"]
+    pca = per_class_accuracy(preds, labels, num_classes)
+    assets = ROOT / "assets"; assets.mkdir(exist_ok=True)
+    pca_df = pd.DataFrame({"breed": base.classes, "clean_accuracy": pca}).sort_values("clean_accuracy")
+    pca_df.to_csv(results_dir / "classification_per_class.csv", index=False)
+    fig, ax = plt.subplots(figsize=(12, 4))
+    order = np.argsort(np.nan_to_num(pca))
+    ax.bar(range(num_classes), pca[order], color="#2b6cb0")
+    ax.set_xticks(range(num_classes))
+    ax.set_xticklabels([base.classes[i] for i in order], rotation=90, fontsize=7)
+    ax.set_ylabel("clean Top-1 accuracy"); ax.set_ylim(0, 1)
+    ax.set_title("Per-breed clean accuracy (sorted)")
+    fig.tight_layout(); fig.savefig(assets / "classification_per_class.png", dpi=110, bbox_inches="tight")
+    print(f"Per-class accuracy saved (worst: {pca_df.iloc[0].breed} {pca_df.iloc[0].clean_accuracy:.2f}, "
+          f"best: {pca_df.iloc[-1].breed} {pca_df.iloc[-1].clean_accuracy:.2f})\n")
 
     rows = []
     for dname, (dist_fn, param) in DISTORTIONS.items():
