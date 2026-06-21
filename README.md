@@ -209,8 +209,32 @@ low-level feature tasks; it trades pixel-level fidelity for lost structure.
 
 ### Task 1 — ResNet-50 classification (high-level, DL)
 
-Baseline (clean) Top-1 = **0.93** on 300 held-out val images (fine-tuned 5 epochs on 1,200
-clean images, Apple MPS). Distortion/restoration sweep curves and per-class breakdown: _filling in._
+Baseline (clean) Top-1 = **0.933** on 300 held-out val images (fine-tuned 5 epochs on 1,200
+clean images, Apple MPS).
+
+| Distortion | level | Top-1 (distorted → restored) |
+|---|---|---|
+| noise (σ) | 5 | 0.93 → 0.70 |
+| noise (σ) | 20 | 0.86 → 0.72 |
+| noise (σ) | 80 | 0.22 → 0.24 |
+| blur (σ) | 1.0 | 0.90 → 0.87 |
+| blur (σ) | 4.0 | 0.44 → **0.50** |
+| jpeg (q) | 50 | 0.90 → 0.87 |
+| jpeg (q) | 10 | 0.64 → 0.64 |
+
+<p>
+<img src="assets/classification_gaussian_noise.png" width="32%">
+<img src="assets/classification_blur.png" width="32%">
+<img src="assets/classification_jpeg.png" width="32%">
+</p>
+
+**Findings.** (1) ResNet-50 is **robust to mild distortion** — accuracy barely moves for noise σ≤20,
+blur σ≤1, or JPEG q≥30, and collapses only at strong levels. (2) Blind classical restoration
+**mostly hurts**: NLM denoising drops σ=5 accuracy 0.93→0.70 (it erases the texture the model reads),
+and bilateral de-JPEG gives nothing back; only deblurring helps, and only at strong blur (σ=4:
+0.44→0.50). This matches the keypoints result — *enhancement tuned for human-visible quality is
+not tuned for the model.* Per-breed accuracy is in `results/classification_per_class.csv`
+(`assets/classification_per_class.png`).
 
 ### Task 2 — DeepLabV3 segmentation (high-level, DL)
 
