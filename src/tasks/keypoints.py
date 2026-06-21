@@ -1,0 +1,26 @@
+"""Task 3 (low-level, classical): interest-point detection with SIFT.
+
+Why SIFT: scale/rotation-invariant keypoints + descriptors, no GT and no training needed,
+CPU-only. Metrics: repeatability rate and matching score (computed in src/metrics).
+Requires opencv-contrib-python.
+"""
+from __future__ import annotations
+
+import cv2
+import numpy as np
+
+
+def detect_and_describe(img: np.ndarray):
+    """Return (keypoints, descriptors) for an RGB uint8 image."""
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    sift = cv2.SIFT_create()
+    return sift.detectAndCompute(gray, None)
+
+
+def match(desc1: np.ndarray, desc2: np.ndarray, ratio: float = 0.75):
+    """Lowe-ratio-tested matches between two descriptor sets."""
+    if desc1 is None or desc2 is None:
+        return []
+    bf = cv2.BFMatcher(cv2.NORM_L2)
+    knn = bf.knnMatch(desc1, desc2, k=2)
+    return [m for m, n in knn if m.distance < ratio * n.distance]

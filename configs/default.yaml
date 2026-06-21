@@ -1,0 +1,31 @@
+# Central experiment configuration.
+data:
+  root: data                 # torchvision downloads Oxford-IIIT Pet here
+  subset_size: 1500          # small subset for speed / Colab
+  image_size: 256
+  seed: 42
+
+distortions:
+  gaussian_noise:
+    sigma: [5, 10, 20, 40, 80]      # intensity sweep (pixel units, 0-255)
+  blur:
+    sigma: [0.5, 1.0, 2.0, 4.0, 8.0]  # Gaussian kernel std
+  jpeg:
+    quality: [90, 70, 50, 30, 10]      # lower = stronger distortion
+
+enhancements:
+  denoise: nlm        # nlm | dl
+  deblur: unsharp     # unsharp | wiener | dl
+  dejpeg: bilateral   # bilateral | dl
+
+tasks:
+  classification:
+    num_classes: 37
+    finetune_epochs: 5
+  segmentation:
+    num_classes: 2     # pet vs background
+    finetune_epochs: 5
+  keypoints:
+    detector: sift
+
+results_dir: results
