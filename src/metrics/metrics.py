@@ -27,4 +27,17 @@ def matching_score(num_good_matches: int, num_keypoints: int) -> float:
     return float(num_good_matches / num_keypoints) if num_keypoints else 0.0
 
 
-# TODO (incremental): repeatability_rate() using known homography between clean/distorted.
+def repeatability_rate(kps_clean, kps_distorted, tol: float = 3.0) -> float:
+    """Keypoints: fraction of clean keypoints re-detected within `tol` pixels.
+
+    Our distortions (noise/blur/JPEG) do not move pixels, so the clean->distorted
+    correspondence is the identity: a clean keypoint is "repeated" if any distorted
+    keypoint lies within `tol` pixels of it.
+    """
+    if not kps_clean or not kps_distorted:
+        return 0.0
+    pc = np.array([kp.pt for kp in kps_clean])          # (Nc, 2)
+    pd = np.array([kp.pt for kp in kps_distorted])      # (Nd, 2)
+    d = np.linalg.norm(pc[:, None, :] - pd[None, :, :], axis=2)  # clean rows x distorted cols
+    repeated = int((d.min(axis=1) <= tol).sum())
+    return float(repeated / len(kps_clean))
