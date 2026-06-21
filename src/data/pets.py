@@ -58,3 +58,44 @@ def load_pets_segmentation(root: str = "data", split: str = "trainval", download
     return OxfordIIITPet(
         root=root, split=split, target_types="segmentation", download=download
     )
+
+
+_IMAGENET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+_IMAGENET_STD = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+
+
+def trimap_to_binary(trimap: np.ndarray) -> np.ndarray:
+    """Oxford trimap (1=pet, 2=background, 3=border) -> binary pet/background.
+
+    Border (3) is merged into the pet foreground, so background is exactly value 2.
+    """
+    return (np.asarray(trimap) != 2).astype(np.int64)
+
+
+class PetSegDataset(Dataset):
+    """OxfordIIITPet(segmentation) -> (normalized image tensor, binary mask) at fixed size.
+
+    img_op (optional) maps an RGB uint8 array -> RGB uint8 array (distortion + enhancement),
+    applied to the image only; the mask is never distorted.
+    """
+
+    def __init__(self, base, indices: Sequence[int], size: int = 256,
+                 img_op: Callable | None = None):
+        self.base, self.indices, self.size, self.img_op = base, list(indices), size, img_op
+
+    def __len__(self) -> int:
+        return len(self.indices)
+
+    def __getitem__(self, i: int):
+        pil, trimap = self.base[self.indices[i]]
+        img = np.asarray(pil.convert("RGB"))
+        if self.img_op is not None:
+            img = self.img_op(img)
+        img_r = Image.fromarray(img).resize((self.size, self.size), Image.BILINEAR)
+        x = torch.from_numpy(np.array(img_r)).permute(2, 0, 1).float() / 255.0
+        x = (x - _IMAGENET_MEAN) / _IMAGENET_STD
+
+        mask = trimap_to_binary(trimap).astype(np.uint8)
+        mask_r = Image.fromarray(mask).resize((self.size, self.size), Image.NEAREST)
+        y = torch.from_numpy(np.array(mask_r)).long()
+        return x, y

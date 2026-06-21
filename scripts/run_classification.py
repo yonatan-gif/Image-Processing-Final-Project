@@ -30,14 +30,8 @@ from src.distortions import DISTORTIONS  # noqa: E402
 from src.enhancements import ENHANCEMENTS  # noqa: E402
 from src.metrics import top1_accuracy  # noqa: E402
 from src.tasks.classification import build_model, preprocess, get_device, fit, predict  # noqa: E402
+from src.utils.ops import ImageOp  # noqa: E402
 from src.utils.viz import curve  # noqa: E402
-
-
-def make_img_op(dist_fn, level, enhance_fn=None):
-    def op(img):
-        out = dist_fn(img, level)
-        return enhance_fn(out) if enhance_fn is not None else out
-    return op
 
 
 def loader_for(base, idx, pre, img_op, batch_size, workers):
@@ -89,9 +83,9 @@ def main() -> None:
         acc_dist, acc_rest = [], []
         for level in levels:
             pd_ = predict(model, loader_for(base, val_idx, pre,
-                          make_img_op(dist_fn, level), batch, workers), device)
+                          ImageOp(dist_fn, level), batch, workers), device)
             pr_ = predict(model, loader_for(base, val_idx, pre,
-                          make_img_op(dist_fn, level, ENHANCEMENTS[dname]), batch, workers), device)
+                          ImageOp(dist_fn, level, ENHANCEMENTS[dname]), batch, workers), device)
             acc_dist.append(top1_accuracy(*pd_))
             acc_rest.append(top1_accuracy(*pr_))
             rows.append(dict(distortion=dname, param=param, level=level,
