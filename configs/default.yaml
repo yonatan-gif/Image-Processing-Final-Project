@@ -13,6 +13,7 @@ distortions:
   jpeg:
     quality: [90, 70, 50, 30, 10]      # lower = stronger distortion
 
+# These mirror the defaults used in code (src/enhancements); listed for transparency.
 enhancements:
   denoise: nlm        # nlm | dl
   deblur: unsharp     # unsharp | wiener | dl
@@ -26,6 +27,6 @@ tasks:
     num_classes: 2     # pet vs background
     finetune_epochs: 5
   keypoints:
-    detector: sift
+    detector: sift  # SIFT (cv2.SIFT_create); kept for documentation
 
 results_dir: results

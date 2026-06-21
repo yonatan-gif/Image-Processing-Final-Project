@@ -20,8 +20,8 @@ def deblur(img: np.ndarray, method: str = "unsharp", amount: float = 1.5) -> np.
     """Unsharp masking: boost high frequencies = sharpen."""
     if method == "unsharp":
         blurred = cv2.GaussianBlur(img, (0, 0), sigmaX=2.0)
-        sharp = cv2.addWeighted(img, 1 + amount, blurred, -amount, 0)
-        return np.clip(sharp, 0, 255).astype(np.uint8)
+        # addWeighted already saturates to uint8, so no extra clip/cast is needed.
+        return cv2.addWeighted(img, 1 + amount, blurred, -amount, 0)
     raise NotImplementedError(f"deblur method '{method}' (Wiener / DL upgrade TODO)")
 
 

@@ -34,6 +34,7 @@ import numpy as np  # noqa: E402
 from src.metrics import top1_accuracy, per_class_accuracy  # noqa: E402
 from src.tasks.classification import build_model, preprocess, get_device, fit, predict  # noqa: E402
 from src.utils.ops import ImageOp  # noqa: E402
+from src.utils.seed import seed_everything  # noqa: E402
 from src.utils.viz import curve  # noqa: E402
 
 
@@ -49,6 +50,7 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
+    seed_everything(cfg["data"]["seed"])
     results_dir = ROOT / cfg.get("results_dir", "results"); results_dir.mkdir(exist_ok=True)
     ckpt_dir = ROOT / "checkpoints"; ckpt_dir.mkdir(exist_ok=True)
     ckpt = ckpt_dir / "resnet50_pets_clean.pth"
@@ -60,7 +62,7 @@ def main() -> None:
     device = get_device()
     print(f"device={device} | subset={subset} | epochs={epochs}\n")
 
-    base = load_pets_classification(root=str(ROOT / "data"), download=False)
+    base = load_pets_classification(root=str(ROOT / "data"), download=True)
     train_idx, val_idx = subset_split(len(base), subset, seed=cfg["data"]["seed"])
     pre = preprocess()
 
@@ -84,10 +86,10 @@ def main() -> None:
     num_classes = cfg["tasks"]["classification"]["num_classes"]
     pca = per_class_accuracy(preds, labels, num_classes)
     assets = ROOT / "assets"; assets.mkdir(exist_ok=True)
-    pca_df = pd.DataFrame({"breed": base.classes, "clean_accuracy": pca}).sort_values("clean_accuracy")
+    order = np.argsort(np.nan_to_num(pca, nan=-1.0))
+    pca_df = pd.DataFrame({"breed": [base.classes[i] for i in order], "clean_accuracy": pca[order]})
     pca_df.to_csv(results_dir / "classification_per_class.csv", index=False)
     fig, ax = plt.subplots(figsize=(12, 4))
-    order = np.argsort(np.nan_to_num(pca))
     ax.bar(range(num_classes), pca[order], color="#2b6cb0")
     ax.set_xticks(range(num_classes))
     ax.set_xticklabels([base.classes[i] for i in order], rotation=90, fontsize=7)

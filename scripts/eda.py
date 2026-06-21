@@ -96,13 +96,13 @@ def class_distribution(cls_ds):
 
 def main() -> None:
     ASSETS.mkdir(exist_ok=True)
-    cls_ds = load_pets_classification(root=str(DATA), download=False)
-    seg_ds = load_pets_segmentation(root=str(DATA), download=False)
+    cls_ds = load_pets_classification(root=str(DATA), download=True)
+    seg_ds = load_pets_segmentation(root=str(DATA), download=True)
 
     # Image-size stats over a sample (full scan is slow and unnecessary).
     rng = np.random.default_rng(0)
     sizes = np.array([Image.open(cls_ds._images[int(i)]).size
-                      for i in rng.choice(len(cls_ds), 300, replace=False)])  # (w, h)
+                      for i in rng.choice(len(cls_ds), min(300, len(cls_ds)), replace=False)])  # (w, h)
 
     print("=== Oxford-IIIT Pet (trainval) ===")
     print(f"images:        {len(cls_ds)}")

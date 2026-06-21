@@ -26,6 +26,7 @@ from src.distortions import DISTORTIONS  # noqa: E402
 from src.enhancements import ENHANCEMENTS  # noqa: E402
 from src.metrics import repeatability_rate, matching_score  # noqa: E402
 from src.tasks.keypoints import detect_and_describe, match  # noqa: E402
+from src.utils.seed import seed_everything  # noqa: E402
 from src.utils.viz import curve, before_after_grid  # noqa: E402
 
 
@@ -80,6 +81,7 @@ def evaluate(img: np.ndarray, cfg: dict, results_dir: Path) -> pd.DataFrame:
 
 def main() -> None:
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
+    seed_everything(cfg["data"]["seed"])
     results_dir = ROOT / cfg.get("results_dir", "results")
     results_dir.mkdir(parents=True, exist_ok=True)
 

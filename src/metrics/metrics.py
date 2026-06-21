@@ -28,14 +28,18 @@ def psnr(clean: np.ndarray, distorted: np.ndarray) -> float:
 
 
 def mean_iou(pred_mask: np.ndarray, gt_mask: np.ndarray, num_classes: int = 2) -> float:
-    """Segmentation: mean Intersection-over-Union across classes."""
+    """Segmentation: mean IoU across classes (per-image helper).
+
+    A class absent from both prediction and ground truth scores IoU = 1.0 (standard
+    convention), so the mean is always over `num_classes` and is stable across images.
+    NOTE: the pipeline reports mIoU via segmentation.evaluate_miou, which accumulates a
+    global confusion matrix over the whole eval set; this helper is for per-image use.
+    """
     ious = []
     for c in range(num_classes):
         p, g = pred_mask == c, gt_mask == c
-        inter = np.logical_and(p, g).sum()
         union = np.logical_or(p, g).sum()
-        if union > 0:
-            ious.append(inter / union)
+        ious.append(1.0 if union == 0 else np.logical_and(p, g).sum() / union)
     return float(np.mean(ious)) if ious else 0.0
 
 
@@ -45,16 +49,24 @@ def matching_score(num_good_matches: int, num_keypoints: int) -> float:
 
 
 def repeatability_rate(kps_clean, kps_distorted, tol: float = 3.0) -> float:
-    """Keypoints: fraction of clean keypoints re-detected within `tol` pixels.
+    """Keypoints: fraction of clean keypoints re-detected within `tol` pixels, one-to-one.
 
     Our distortions (noise/blur/JPEG) do not move pixels, so the clean->distorted
-    correspondence is the identity: a clean keypoint is "repeated" if any distorted
-    keypoint lies within `tol` pixels of it.
+    correspondence is the identity. Each distorted keypoint may match at most ONE clean
+    keypoint (greedy nearest assignment) — without this, a dense cluster of distorted
+    keypoints could mark many clean ones as repeated and inflate the rate.
     """
     if not kps_clean or not kps_distorted:
         return 0.0
     pc = np.array([kp.pt for kp in kps_clean])          # (Nc, 2)
     pd = np.array([kp.pt for kp in kps_distorted])      # (Nd, 2)
     d = np.linalg.norm(pc[:, None, :] - pd[None, :, :], axis=2)  # clean rows x distorted cols
-    repeated = int((d.min(axis=1) <= tol).sum())
-    return float(repeated / len(kps_clean))
+    used = np.zeros(len(pd), dtype=bool)
+    repeated = 0
+    for i in range(len(pc)):
+        row = np.where(used, np.inf, d[i])
+        j = int(np.argmin(row))
+        if row[j] <= tol:
+            used[j] = True
+            repeated += 1
+    return float(repeated / len(pc))

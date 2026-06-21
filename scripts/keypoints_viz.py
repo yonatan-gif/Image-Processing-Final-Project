@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.distortions import DISTORTIONS  # noqa: E402
 from src.tasks.keypoints import detect_and_describe  # noqa: E402
+from src.utils.seed import seed_everything  # noqa: E402
 
 ASSETS = ROOT / "assets"
 
@@ -35,6 +36,7 @@ def draw_kps(img):
 def main() -> None:
     ASSETS.mkdir(exist_ok=True)
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
+    seed_everything(cfg["data"]["seed"])
     img = chelsea()
 
     panels = []

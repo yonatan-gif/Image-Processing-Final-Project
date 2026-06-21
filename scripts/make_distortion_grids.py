@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 from src.data.pets import load_pets_classification  # noqa: E402
 from src.distortions import DISTORTIONS  # noqa: E402
 from src.enhancements import ENHANCEMENTS  # noqa: E402
+from src.utils.seed import seed_everything  # noqa: E402
 
 ASSETS = ROOT / "assets"
 
@@ -28,7 +29,8 @@ ASSETS = ROOT / "assets"
 def main() -> None:
     ASSETS.mkdir(exist_ok=True)
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
-    ds = load_pets_classification(root=str(ROOT / "data"), download=False)
+    seed_everything(cfg["data"]["seed"])
+    ds = load_pets_classification(root=str(ROOT / "data"), download=True)
 
     pil, label = ds[0]
     img = np.asarray(pil.convert("RGB"))

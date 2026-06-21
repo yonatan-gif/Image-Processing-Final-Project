@@ -29,6 +29,7 @@ from src.enhancements import ENHANCEMENTS  # noqa: E402
 from src.metrics import top1_accuracy  # noqa: E402
 from src.tasks.classification import build_model, preprocess, get_device, fit, predict  # noqa: E402
 from src.utils.ops import ImageOp, RandomDistortOp  # noqa: E402
+from src.utils.seed import seed_everything  # noqa: E402
 from src.utils.viz import curve  # noqa: E402
 
 
@@ -44,6 +45,7 @@ def main() -> None:
     args = ap.parse_args()
 
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
+    seed_everything(cfg["data"]["seed"])
     results_dir = ROOT / cfg.get("results_dir", "results"); results_dir.mkdir(exist_ok=True)
     ckpt_dir = ROOT / "checkpoints"; ckpt_dir.mkdir(exist_ok=True)
     base_ckpt = ckpt_dir / "resnet50_pets_clean.pth"
@@ -55,7 +57,7 @@ def main() -> None:
     device = get_device()
     print(f"device={device} | subset={subset} | epochs={epochs}\n")
 
-    base = load_pets_classification(root=str(ROOT / "data"), download=False)
+    base = load_pets_classification(root=str(ROOT / "data"), download=True)
     train_idx, val_idx = subset_split(len(base), subset, seed=cfg["data"]["seed"])
     pre = preprocess()
 
@@ -71,6 +73,8 @@ def main() -> None:
         if base_ckpt.exists():
             model.load_state_dict(torch.load(base_ckpt, map_location="cpu"))
             print("Starting from clean baseline checkpoint.")
+        else:
+            print("WARNING: no baseline checkpoint found — training distorted model from pretrained ImageNet/COCO weights.")
         print("Fine-tuning on DISTORTED (augmented) images...")
         fit(model, loader_for(base, train_idx, pre, aug, batch, workers, shuffle=True), device, epochs=epochs)
         torch.save(model.state_dict(), ft_ckpt)
@@ -79,6 +83,8 @@ def main() -> None:
     # Read the baseline sweep (distorted/restored) for the comparison lines, if present.
     base_csv = results_dir / "classification_results.csv"
     base_df = pd.read_csv(base_csv) if base_csv.exists() else None
+    if base_df is None:
+        print("WARNING: baseline results CSV missing — distorted/restored comparison lines will be omitted.")
 
     rows = []
     for dname, (dist_fn, param) in DISTORTIONS.items():
