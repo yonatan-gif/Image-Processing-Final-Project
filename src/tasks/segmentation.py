@@ -1,8 +1,4 @@
-"""Task 2 (high-level, DL, dense): pet-vs-background segmentation with DeepLabV3-ResNet50.
-
-Why DeepLabV3: atrous convolutions + ASPP capture multi-scale context; pretrained head is
-easy to adapt to a 2-class (pet/background) problem. Metric: mIoU.
-"""
+"""Pet-vs-background segmentation with a fine-tuned DeepLabV3-ResNet50 (Task 2). Metric: mIoU."""
 from __future__ import annotations
 
 import torch

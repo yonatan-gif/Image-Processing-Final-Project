@@ -1,8 +1,4 @@
-"""Task 1 (high-level, DL): breed classification with ResNet-50.
-
-Why ResNet-50: deep residual CNN, strong ImageNet-pretrained features, cheap to fine-tune
-to the 37 Oxford-IIIT Pet breeds. Metric: Top-1 accuracy.
-"""
+"""Breed classification with a fine-tuned ResNet-50 (Task 1). Metric: Top-1 accuracy."""
 from __future__ import annotations
 
 import torch

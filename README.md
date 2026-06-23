@@ -4,8 +4,9 @@
 controlled image distortions, and how much we can recover with (1) image restoration and
 (2) model fine-tuning.
 
-This README doubles as the project **report**: it holds the design decisions (with references),
-the experiment matrix, and the result tables, before/after grids, and degradation/recovery curves.
+This README is the report — design decisions and references, the experiment setup, and all the
+result tables, before/after grids, and degradation/recovery curves are here. Everything was run on
+a MacBook (Apple MPS); a free Colab T4 reproduces it.
 
 ---
 
@@ -35,7 +36,9 @@ distortions, then evaluate three recovery strategies against the clean baseline:
 3. **Fine-tuning** — adapt the deep model to the distortion domain (DL tasks only).
 
 Mixing a low-level classical task (SIFT, no training, no labels) with two high-level deep tasks
-lets us contrast how degradation and recovery behave across the abstraction spectrum.
+lets us contrast how degradation and recovery behave across the abstraction spectrum. We went in
+expecting the matched cleaners to help; the most interesting part of the project turned out to be
+the cases where they don't.
 
 ---
 
@@ -384,3 +387,22 @@ adds nothing while fine-tuning recovers most of the loss.
 **Practical takeaway.** Match the recovery method to the *consumer*. Blind classical enhancement
 tuned for the human eye can *hurt* the algorithm; **adapting the model** is the more reliable lever,
 especially under severe degradation.
+
+---
+
+## 11. Notes from building this
+
+A few things that came up along the way, in case they're useful to anyone repeating the experiment:
+
+- The result that surprised us most is that denoising the input *lowers* SIFT repeatability and
+  classifier accuracy at low noise. NLM produces a cleaner-looking picture but removes the micro-texture
+  the algorithm keys on. We left it in rather than tuning the cleaner to look good — the negative
+  number is the point.
+- We expected to need Colab, but a MacBook's MPS backend trained both models fine on a ~1.5k subset,
+  so everything runs locally; Colab is just the fallback.
+- First version of the repeatability metric counted a clean keypoint as "repeated" if *any* distorted
+  keypoint was nearby. That over-counts when noise spawns clusters of keypoints, so it now uses
+  one-to-one matching. The fix lowered the numbers a few points but didn't change any conclusion.
+- Limitations: small per-task eval sets (300 val images, one reference image for SIFT), binary
+  (pet/background) segmentation, and only classical restorers by default — DL restorers (DnCNN,
+  Restormer, FBCNN) are an obvious next step.

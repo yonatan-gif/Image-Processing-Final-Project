@@ -1,8 +1,6 @@
-"""Task 3 (low-level, classical): interest-point detection with SIFT.
+"""SIFT interest-point detection (Task 3, classical, CPU-only).
 
-Why SIFT: scale/rotation-invariant keypoints + descriptors, no GT and no training needed,
-CPU-only. Metrics: repeatability rate and matching score (computed in src/metrics).
-Requires opencv-contrib-python.
+Metrics: repeatability rate and matching score (see src/metrics). Requires opencv-contrib-python.
 """
 from __future__ import annotations
 
