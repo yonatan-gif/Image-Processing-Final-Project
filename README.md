@@ -255,43 +255,6 @@ so the "per-SNR" sweep has a dB interpretation:
 
 ![SNR per level](assets/snr_levels.png)
 
-### Task 3 — SIFT keypoints (low-level, classical)
-
-Repeatability and matching score vs. distortion intensity, on the clean image and after the
-matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
-
-| Distortion | level | repeatability (distorted → restored) | Δ recovery | matching (distorted → restored) |
-|---|---|---|---|---|
-| noise (σ) | 5 | 0.74 → 0.26 | **−0.48** | 0.74 → 0.25 |
-| noise (σ) | 20 | 0.46 → 0.37 | −0.09 | 0.35 → 0.30 |
-| noise (σ) | 80 | 0.21 → 0.21 | 0.00 | 0.10 → 0.11 |
-| blur (σ) | 0.5 | 0.74 → **0.83** | +0.08 | 0.74 → 0.72 |
-| blur (σ) | 1.0 | 0.38 → **0.80** | **+0.42** | 0.35 → **0.72** |
-| blur (σ) | 8.0 | 0.01 → 0.02 | +0.01 | 0.03 → 0.03 |
-| jpeg (q) | 90 | 0.83 → 0.45 | −0.38 | 0.84 → 0.42 |
-| jpeg (q) | 10 | 0.54 → 0.39 | −0.15 | 0.32 → 0.27 |
-
-*Repeatability uses one-to-one keypoint matching (τ = 3 px); seeded run.*
-
-<p>
-<img src="assets/keypoints_gaussian_noise.png" width="32%">
-<img src="assets/keypoints_blur.png" width="32%">
-<img src="assets/keypoints_jpeg.png" width="32%">
-</p>
-
-*Repeatability vs. intensity for noise / blur / JPEG; each plot shows distorted vs. restored.*
-
-Keypoints drawn on the image (`scripts/keypoints_viz.py`): **blur** erases them (559 → 21),
-while **noise** and **JPEG** spawn *spurious* unstable ones (559 → 661 / 678) — which is why
-both repeatability and matching collapse.
-
-![Keypoint visualization](assets/keypoints_visual.png)
-
-**Key finding:** the matched cleaner helps only for **blur** (deblur restores repeatability from
-0.38 → 0.80 at σ=1). For **noise** and **JPEG**, classical cleaners (NLM, bilateral) *hurt*
-SIFT — they smooth away the fine texture keypoints sit on. Blind enhancement is not free for
-low-level feature tasks; it trades pixel-level fidelity for lost structure.
-
 ### Task 1 — ResNet-50 classification (high-level, DL)
 
 Baseline (clean) Top-1 = **0.933** on 300 held-out val images (fine-tuned 5 epochs on 1,200
@@ -354,6 +317,43 @@ Baseline (clean) mIoU = **0.923** on 300 val images (fine-tuned 5 epochs on 1,20
 levels and only noise σ=80 causes a large drop (0.923→0.627). Restoration is **roughly neutral**
 (small help at strong blur/JPEG, small harm at mild noise). **Fine-tuning again wins where it
 matters most** — noise σ=80 0.627→**0.865**, blur σ=8 0.791→0.833, JPEG q=10 0.847→0.891.
+
+### Task 3 — SIFT keypoints (low-level, classical)
+
+Repeatability and matching score vs. distortion intensity, on the clean image and after the
+matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
+
+| Distortion | level | repeatability (distorted → restored) | Δ recovery | matching (distorted → restored) |
+|---|---|---|---|---|
+| noise (σ) | 5 | 0.74 → 0.26 | **−0.48** | 0.74 → 0.25 |
+| noise (σ) | 20 | 0.46 → 0.37 | −0.09 | 0.35 → 0.30 |
+| noise (σ) | 80 | 0.21 → 0.21 | 0.00 | 0.10 → 0.11 |
+| blur (σ) | 0.5 | 0.74 → **0.83** | +0.08 | 0.74 → 0.72 |
+| blur (σ) | 1.0 | 0.38 → **0.80** | **+0.42** | 0.35 → **0.72** |
+| blur (σ) | 8.0 | 0.01 → 0.02 | +0.01 | 0.03 → 0.03 |
+| jpeg (q) | 90 | 0.83 → 0.45 | −0.38 | 0.84 → 0.42 |
+| jpeg (q) | 10 | 0.54 → 0.39 | −0.15 | 0.32 → 0.27 |
+
+*Repeatability uses one-to-one keypoint matching (τ = 3 px); seeded run.*
+
+<p>
+<img src="assets/keypoints_gaussian_noise.png" width="32%">
+<img src="assets/keypoints_blur.png" width="32%">
+<img src="assets/keypoints_jpeg.png" width="32%">
+</p>
+
+*Repeatability vs. intensity for noise / blur / JPEG; each plot shows distorted vs. restored.*
+
+Keypoints drawn on the image (`scripts/keypoints_viz.py`): **blur** erases them (559 → 21),
+while **noise** and **JPEG** spawn *spurious* unstable ones (559 → 661 / 678) — which is why
+both repeatability and matching collapse.
+
+![Keypoint visualization](assets/keypoints_visual.png)
+
+**Key finding:** the matched cleaner helps only for **blur** (deblur restores repeatability from
+0.38 → 0.80 at σ=1). For **noise** and **JPEG**, classical cleaners (NLM, bilateral) *hurt*
+SIFT — they smooth away the fine texture keypoints sit on. Blind enhancement is not free for
+low-level feature tasks; it trades pixel-level fidelity for lost structure.
 
 ---
 
