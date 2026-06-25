@@ -148,6 +148,7 @@ For every (task × distortion) we evaluate four conditions against the clean bas
 4. **Fine-tune** — DL model re-trained on distortion-augmented data (DL tasks only).
 
 We define **recovery** as the gain a strategy buys back: $\Delta = \text{metric}_{\text{recovered}} - \text{metric}_{\text{distorted}}$
+We define **recovery** as the gain a strategy buys back: $\Delta = \text{metric}_{\text{recovered}} - \text{metric}_{\text{distorted}}$
 (positive = helps, negative = hurts). Results are reported **per class** and **per intensity (SNR)**.
 
 ### Experimental sample
