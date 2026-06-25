@@ -73,7 +73,7 @@ Matching rule: each distortion is paired with the cleaner designed to invert it.
 **Improvement per DL task:** (1) restoration pre-processing, (2) fine-tuning on distorted data.
 SIFT gets restoration only — it is a fixed algorithm with no weights to train.
 
-### 2.1 Degradation model (with math)
+### 2.1 Degradation model
 
 **Gaussian noise.** Independent zero-mean noise is added to every pixel:
 
@@ -105,7 +105,7 @@ ringing near edges. *Matched restoration:* bilateral de-blocking (§2.2).
   photometrically close pixels. *Why it helps:* softens block seams in flat regions while keeping
   true edges. *Trade-off:* cannot restore discarded DCT coefficients.
 
-### 2.3 Models, in one sentence each
+### 2.3 Models
 - **ResNet-50:** deep residual CNN; skip connections let very deep nets train stably.
 - **DeepLabV3:** atrous (dilated) convolutions + ASPP to segment at multiple scales.
 - **SIFT:** scale-space DoG keypoints with gradient-orientation descriptors invariant to scale/rotation.
