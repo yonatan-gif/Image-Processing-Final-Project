@@ -285,15 +285,13 @@ Top-1 accuracy under each strategy (distorted vs. restored vs. fine-tuned on dis
 
 *Top-1 vs. intensity for noise / blur / JPEG: distorted, restored, and fine-tuned.*
 
-**Findings:** 
-(1) ResNet-50 is **robust to mild distortion** — accuracy barely moves for noise σ≤20,
-blur σ≤1, or JPEG q≥50, and collapses only at strong levels. 
-(2) Blind classical restoration
-**mostly hurts**: NLM denoising drops σ=5 accuracy 0.93→0.70, and de-JPEG gives nothing back;
-only deblurring helps, and only at strong blur. 
-(3) **Fine-tuning is decisively the best recovery**:
-at the worst levels it recovers what restoration cannot — noise σ=80 **0.22→0.75**, blur σ=8
-0.13→0.59, JPEG q=10 0.64→0.82.
+**Findings:**
+
+1. ResNet-50 is **robust to mild distortion** — accuracy barely moves for noise $\sigma \leq 20$, blur $\sigma \leq 1$, or JPEG $q \geq 50$, and collapses only at strong levels.
+
+2. Blind classical restoration **mostly hurts**: NLM denoising drops $\sigma=5$ accuracy 0.93 $\rightarrow$ 0.70, and de-JPEG gives nothing back; only deblurring helps, and only at strong blur.
+
+3. **Fine-tuning is decisively the best recovery**: at the worst levels it recovers what restoration cannot — noise $\sigma=80$ **0.22 $\rightarrow$ 0.75**, blur $\sigma=8$ 0.13 $\rightarrow$ 0.59, JPEG $q=10$ 0.64 $\rightarrow$ 0.82.
 
 Per-breed accuracy (worst: Birman 0.62, best: Abyssinian 1.00):
 
