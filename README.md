@@ -160,10 +160,13 @@ $$
 | Task | Model | Eval set | Metric | GT requirement |
 |---|---|---|---|---|
 | Feature detection | SIFT | 1 reference image, full sweep | repeatability, matching ratio | none |
-| Classification | ResNet-50 | 300 val images | Top-1 (overall + per breed) | breed label |
-| Segmentation | DeepLabV3 | 300 val images | mIoU (per class) | trimap mask |
+| Classification | ResNet-50 | 300 val images (aggregate) · 2,480 held-out images (per breed) | Top-1 (overall + per breed × intensity) | breed label |
+| Segmentation | DeepLabV3 | 300 val images | mIoU + per-class IoU (pet / background) | trimap mask |
 
-Subsets use a fixed seed (42) for reproducibility.
+Subsets use a fixed seed (42) for reproducibility. The per-breed × intensity sweep
+(`scripts/run_classification_per_class.py`) evaluates on every trainval image outside the
+1,200-image training subset (~67 per breed), because ranking 37 breeds from the 300-image
+val subset (~8 per breed) would be dominated by binomial noise.
 
 ### Metric definitions
 
@@ -199,7 +202,8 @@ Outputs: result tables (per class + per intensity), degradation/recovery **curve
 │   ├── tasks/          # classification (ResNet-50), segmentation (DeepLabV3), keypoints (SIFT)
 │   ├── metrics/        # top-1, mIoU, repeatability, matching score
 │   └── utils/          # viz (grids/curves), picklable image-op
-├── scripts/            # eda.py + run_{keypoints,classification,segmentation}.py + smoke_test.py
+├── scripts/            # eda.py + run_{keypoints,classification,segmentation}[_finetune].py
+│                       #   + run_classification_per_class.py + make_figures.py + smoke_test.py
 ├── notebooks/          # Colab fine-tuning
 ├── assets/             # README figures (tracked)
 └── results/            # generated tables / figures (git-ignored)
@@ -217,6 +221,12 @@ python scripts/eda.py                 # dataset stats + annotated grid
 python scripts/run_keypoints.py       # Task 3 (CPU)
 python scripts/run_classification.py  # Task 1 (MPS/GPU)
 python scripts/run_segmentation.py    # Task 2 (MPS/GPU)
+
+# Improvement #2 (fine-tune on distorted data) + the per-class x intensity sweep:
+python scripts/run_classification_finetune.py
+python scripts/run_segmentation_finetune.py
+python scripts/run_classification_per_class.py  # per-breed heatmaps (needs the Task 1 checkpoint)
+python scripts/make_figures.py                  # regenerate all CPU report figures in one command
 ```
 
 ---
@@ -234,7 +244,7 @@ python scripts/run_segmentation.py    # Task 2 (MPS/GPU)
 | 8 | Measure degradation | ✔ all 3 tasks |
 | 9 | Apply enhancements + measure | ✔ all 3 tasks |
 | 10–11 | Fine-tune + measure | ✔ classification + segmentation (improvement #2) |
-| 12 | Polish README (de-AI pass) | ◻ scheduled last |
+| 12 | Polish README (de-AI pass) | ✔ voice + docstring pass |
 | 13 | PPT/PDF + final repo review | ◻ (slide draft in `docs/SLIDES.md`) |
 
 ---
@@ -293,9 +303,31 @@ Top-1 accuracy under each strategy (distorted vs. restored vs. fine-tuned on dis
 
 3. **Fine-tuning is decisively the best recovery**: at the worst levels it recovers what restoration cannot — noise $\sigma=80$ **0.22 $\rightarrow$ 0.75**, blur $\sigma=8$ 0.13 $\rightarrow$ 0.59, JPEG $q=10$ 0.64 $\rightarrow$ 0.82.
 
-Per-breed accuracy (worst: Birman 0.62, best: Abyssinian 1.00):
+**Per-breed × intensity (the two reporting axes crossed).** Per-breed numbers come from the
+2,480 held-out images (~67/breed, `scripts/run_classification_per_class.py`) — clean overall
+Top-1 there is 0.911. Worst breeds on clean data: Egyptian Mau 0.72, American Pit Bull
+Terrier 0.74, Staffordshire Bull Terrier 0.74, Birman 0.79; three breeds sit at 1.00. The
+weak breeds are exactly the lookalike pairs (Pit Bull ↔ Staffordshire Bull Terrier,
+Birman ↔ Ragdoll, Egyptian Mau ↔ Bengal).
 
 ![Per-breed accuracy](assets/classification_per_class.png)
+
+Crossing breed with distortion intensity (rows sorted by clean accuracy, best on top):
+
+<p>
+<img src="assets/classification_heatmap_gaussian_noise.png" width="32%">
+<img src="assets/classification_heatmap_blur.png" width="32%">
+<img src="assets/classification_heatmap_jpeg.png" width="32%">
+</p>
+
+*Per-breed Top-1 vs intensity for noise / blur / JPEG.*
+
+Two patterns: **moderate distortion amplifies existing confusions** — at blur σ=4 the five
+weakest-on-clean breeds average 0.24 while the five strongest still hold 0.47, and at JPEG q=10
+it's 0.53 vs 0.63 — whereas **extreme noise flattens everyone** (σ=80: 0.22 vs 0.27; the
+degradation stops being class-selective once texture is gone). A side lesson in sample size:
+the earlier 300-image val subset (~8/breed) ranked Birman worst at 0.62; with ~67/breed its
+true accuracy is 0.79 and Egyptian Mau is the real laggard.
 
 ### Task 2 — DeepLabV3 segmentation (high-level, DL)
 
@@ -303,9 +335,9 @@ Baseline (clean) mIoU = **0.923** on 300 val images (fine-tuned 5 epochs on 1,20
 
 | Distortion | level | distorted | restored | fine-tuned |
 |---|---|---|---|---|
-| noise (σ) | 5 | 0.923 | 0.901 | 0.912 |
-| noise (σ) | 20 | 0.906 | 0.896 | 0.907 |
-| noise (σ) | 80 | 0.627 | 0.621 | **0.865** |
+| noise (σ) | 5 | 0.922 | 0.901 | 0.912 |
+| noise (σ) | 20 | 0.904 | 0.899 | 0.908 |
+| noise (σ) | 80 | 0.623 | 0.620 | **0.870** |
 | blur (σ) | 1.0 | 0.916 | 0.921 | 0.910 |
 | blur (σ) | 8.0 | 0.791 | 0.799 | **0.833** |
 | jpeg (q) | 50 | 0.922 | 0.918 | 0.912 |
@@ -320,9 +352,25 @@ Baseline (clean) mIoU = **0.923** on 300 val images (fine-tuned 5 epochs on 1,20
 *mIoU vs. intensity for noise / blur / JPEG; clean baseline, distorted, and restored.*
 
 **Findings.** Segmentation is the **most robust** task: mIoU holds ≥0.85 until the strongest
-levels and only noise σ=80 causes a large drop (0.923→0.627). Restoration is **roughly neutral**
+levels and only noise σ=80 causes a large drop (0.923→0.623). Restoration is **roughly neutral**
 (small help at strong blur/JPEG, small harm at mild noise). **Fine-tuning again wins where it
-matters most** — noise σ=80 0.627→**0.865**, blur σ=8 0.791→0.833, JPEG q=10 0.847→0.891.
+matters most** — noise σ=80 0.623→**0.870**, blur σ=8 0.791→0.833, JPEG q=10 0.847→0.891.
+
+**Per-class IoU (the second reporting axis).** Splitting mIoU into its two classes shows the
+degradation is not symmetric — it concentrates almost entirely in the **pet** class:
+
+| Condition | IoU background | IoU pet | gap |
+|---|---|---|---|
+| clean | 0.935 | 0.911 | 0.02 |
+| noise σ=80, frozen model | 0.731 | **0.515** | **0.22** |
+| noise σ=80, fine-tuned | 0.890 | 0.850 | 0.04 |
+
+The background is large, smooth regions that survive noise; the pet is the textured object whose
+boundary evidence the noise destroys, so the aggregate mIoU understates how badly the actual
+object mask degrades. Fine-tuning doesn't just recover the mean — it closes the per-class gap
+(0.22 → 0.04). Full per-class curves for all three distortions (distorted and restored):
+
+![Per-class IoU](assets/segmentation_per_class.png)
 
 ### Task 3 — SIFT keypoints (low-level, classical)
 
@@ -409,6 +457,8 @@ A few things that came up along the way, in case they're useful to anyone repeat
 - First version of the repeatability metric counted a clean keypoint as "repeated" if *any* distorted
   keypoint was nearby. That over-counts when noise spawns clusters of keypoints, so it now uses
   one-to-one matching. The fix lowered the numbers a few points but didn't change any conclusion.
-- Limitations: small per-task eval sets (300 val images, one reference image for SIFT), binary
-  (pet/background) segmentation, and only classical restorers by default — DL restorers (DnCNN,
-  Restormer, FBCNN) are an obvious next step.
+- Limitations: the aggregate sweeps use a 300-image val subset (the per-breed × intensity sweep
+  uses 2,480 held-out images to make per-class numbers meaningful), SIFT uses one reference
+  image, segmentation is binary (pet/background, though now reported per class), and only
+  classical restorers are implemented — DL restorers (DnCNN, Restormer, FBCNN) are an obvious
+  next step.

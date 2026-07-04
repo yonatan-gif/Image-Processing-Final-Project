@@ -87,10 +87,11 @@ def main() -> None:
         levels = cfg["distortions"][dname][param]
         miou_ft = []
         for level in levels:
-            m = evaluate_miou(model, loader_for(base, val_idx, size, ImageOp(dist_fn, level), batch, workers), device)
+            m, pc = evaluate_miou(model, loader_for(base, val_idx, size, ImageOp(dist_fn, level), batch, workers), device)
             miou_ft.append(m)
-            rows.append(dict(distortion=dname, param=param, level=level, miou_finetuned=m))
-            print(f"  {dname:14s} {param}={level:<6} finetuned={m:.3f}")
+            rows.append(dict(distortion=dname, param=param, level=level, miou_finetuned=m,
+                             iou_background_finetuned=pc[0], iou_pet_finetuned=pc[1]))
+            print(f"  {dname:14s} {param}={level:<6} finetuned={m:.3f} (bg {pc[0]:.3f} / pet {pc[1]:.3f})")
 
         series = {"finetuned": miou_ft}
         if base_df is not None:

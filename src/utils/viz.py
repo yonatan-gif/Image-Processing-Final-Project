@@ -1,4 +1,4 @@
-"""Plotting helpers: before/after image grids and degradation/recovery curves."""
+"""Plotting helpers: before/after grids, degradation/recovery curves, per-class heatmaps."""
 from __future__ import annotations
 
 from typing import Sequence
@@ -17,6 +17,24 @@ def before_after_grid(images: Sequence[np.ndarray], titles: Sequence[str], save_
         ax.imshow(img)
         ax.set_title(title)
         ax.axis("off")
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=120, bbox_inches="tight")
+    return fig
+
+
+def heatmap(matrix: np.ndarray, row_labels: Sequence[str], col_labels: Sequence[str],
+            xlabel: str, title: str, cbar_label: str, save_path: str | None = None):
+    """Class x intensity heatmap (rows = classes, columns = distortion levels)."""
+    fig, ax = plt.subplots(figsize=(7, 10.5))
+    im = ax.imshow(matrix, aspect="auto", cmap="viridis", vmin=0.0, vmax=1.0)
+    ax.set_xticks(range(len(col_labels)))
+    ax.set_xticklabels(col_labels)
+    ax.set_yticks(range(len(row_labels)))
+    ax.set_yticklabels(row_labels, fontsize=6.5)
+    ax.set_xlabel(xlabel)
+    ax.set_title(title)
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label=cbar_label)
     fig.tight_layout()
     if save_path:
         fig.savefig(save_path, dpi=120, bbox_inches="tight")

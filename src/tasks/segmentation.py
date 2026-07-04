@@ -36,8 +36,12 @@ def fit(model, loader, device, epochs: int = 5, lr: float = 1e-4):
 
 
 @torch.no_grad()
-def evaluate_miou(model, loader, device, num_classes: int = 2) -> float:
-    """Mean IoU over `loader`, accumulated via a global confusion matrix."""
+def evaluate_miou(model, loader, device, num_classes: int = 2) -> tuple[float, list[float]]:
+    """Mean IoU over `loader`, accumulated via a global confusion matrix.
+
+    Returns (mIoU, per-class IoU list indexed by class id: 0=background, 1=pet), so
+    results can be reported per class as well as aggregated.
+    """
     model.eval()
     inter = torch.zeros(num_classes)
     union = torch.zeros(num_classes)
@@ -47,5 +51,8 @@ def evaluate_miou(model, loader, device, num_classes: int = 2) -> float:
             p, g = pred == c, y == c
             inter[c] += (p & g).sum()
             union[c] += (p | g).sum()
-    ious = inter[union > 0] / union[union > 0]
-    return float(ious.mean()) if len(ious) else 0.0
+    valid = union > 0
+    ious = torch.full((num_classes,), float("nan"))
+    ious[valid] = inter[valid] / union[valid]
+    miou = float(ious[valid].mean()) if valid.any() else 0.0
+    return miou, [float(v) for v in ious]
