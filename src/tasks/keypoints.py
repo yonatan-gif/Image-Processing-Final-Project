@@ -16,8 +16,12 @@ def detect_and_describe(img: np.ndarray):
 
 
 def match(desc1: np.ndarray, desc2: np.ndarray, ratio: float = 0.75):
-    """Lowe-ratio-tested matches between two descriptor sets."""
-    if desc1 is None or desc2 is None:
+    """Lowe-ratio-tested matches between two descriptor sets.
+
+    The ratio test needs two neighbours per query, so fewer than 2 descriptors on
+    either side (e.g. strong blur leaves 0-1 keypoints) means no testable matches.
+    """
+    if desc1 is None or desc2 is None or len(desc1) < 2 or len(desc2) < 2:
         return []
     bf = cv2.BFMatcher(cv2.NORM_L2)
     knn = bf.knnMatch(desc1, desc2, k=2)

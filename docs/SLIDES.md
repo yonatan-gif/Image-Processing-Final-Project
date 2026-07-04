@@ -1,7 +1,7 @@
 # Presentation content (source for the final PPT/PDF)
 
-Slide-by-slide verbatim content. Figures referenced live in `assets/`. Numbers marked
-_(pending)_ are filled from the GPU fine-tune batch.
+Slide-by-slide verbatim content. Figures referenced live in `assets/`. Numbers are synced
+with the README result tables.
 
 ---
 
@@ -40,8 +40,10 @@ For each (task × distortion): **Baseline (clean) → Distorted (sweep) → Rest
 - Fine-tune = continue training on distortion-augmented data (DL tasks only).
 
 ## Slide 7 — Task 3: SIFT keypoints (low-level)
-- Blur erases keypoints (559→21); noise/JPEG spawn spurious ones (→633/678).
-- Restoration helps **only blur** (repeatability 0.44→0.86 at σ=1); hurts noise/JPEG.
+- 40 seeded dataset images, mean ± std. Blur erases keypoints (290→12 on the sample image);
+  noise/JPEG spawn spurious ones (→362/331).
+- Restoration helps **only blur** (repeatability 0.45→0.76 at σ=1); hurts noise (0.77→0.42
+  at σ=5) and JPEG (0.86→0.54 at q=90).
 - Figures: `assets/keypoints_visual.png`, `assets/keypoints_*.png`
 
 ## Slide 8 — Task 1: ResNet-50 classification (high-level)
@@ -67,6 +69,6 @@ For each (task × distortion): **Baseline (clean) → Distorted (sweep) → Rest
 - Reproducible: one dataset, pretrained models, runs on Apple MPS / free Colab T4.
 
 ## Slide 12 — Repo & reproducibility
-- `scripts/`: eda · run_keypoints · run_classification(+finetune) · run_segmentation(+finetune)
+- `scripts/`: eda · run_keypoints · run_classification(+finetune, +per_class) · run_segmentation(+finetune)
 - `notebooks/colab_finetune.ipynb` — full T4 pipeline
 - README = full report with all tables, grids, curves.

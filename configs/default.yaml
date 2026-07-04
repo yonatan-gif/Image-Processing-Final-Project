@@ -28,5 +28,6 @@ tasks:
     finetune_epochs: 5
   keypoints:
     detector: sift  # SIFT (cv2.SIFT_create); kept for documentation
+    n_images: 40    # seeded Oxford-IIIT Pet sample; metrics reported as mean +- std
 
 results_dir: results

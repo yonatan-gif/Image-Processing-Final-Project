@@ -42,11 +42,19 @@ def heatmap(matrix: np.ndarray, row_labels: Sequence[str], col_labels: Sequence[
 
 
 def curve(x: Sequence[float], series: dict[str, Sequence[float]], xlabel: str, ylabel: str,
-          title: str, save_path: str | None = None):
-    """Plot metric-vs-intensity curves (one line per series: baseline/distorted/restored/finetuned)."""
+          title: str, save_path: str | None = None,
+          std: dict[str, Sequence[float]] | None = None):
+    """Plot metric-vs-intensity curves (one line per series: baseline/distorted/restored/finetuned).
+
+    `std` (optional) maps a series name to per-point standard deviations, drawn as a
+    shaded mean +- std band around that line.
+    """
     fig, ax = plt.subplots(figsize=(6, 4))
     for name, ys in series.items():
-        ax.plot(x, ys, marker="o", label=name)
+        (line,) = ax.plot(x, ys, marker="o", label=name)
+        if std and name in std:
+            ys_a, sd_a = np.asarray(ys), np.asarray(std[name])
+            ax.fill_between(x, ys_a - sd_a, ys_a + sd_a, alpha=0.15, color=line.get_color())
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)

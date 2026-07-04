@@ -159,7 +159,7 @@ $$
 
 | Task | Model | Eval set | Metric | GT requirement |
 |---|---|---|---|---|
-| Feature detection | SIFT | 1 reference image, full sweep | repeatability, matching ratio | none |
+| Feature detection | SIFT | 40 seeded dataset images, full sweep | repeatability, matching ratio (mean ± std) | none |
 | Classification | ResNet-50 | 300 val images (aggregate) · 2,480 held-out images (per breed) | Top-1 (overall + per breed × intensity) | breed label |
 | Segmentation | DeepLabV3 | 300 val images | mIoU + per-class IoU (pet / background) | trimap mask |
 
@@ -374,21 +374,26 @@ object mask degrades. Fine-tuning doesn't just recover the mean — it closes th
 
 ### Task 3 — SIFT keypoints (low-level, classical)
 
-Repeatability and matching score vs. distortion intensity, on the clean image and after the
-matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
+Repeatability and matching score vs. distortion intensity, before and after the matched
+cleaner, measured per image against its own clean version and averaged over **40 seeded
+dataset images** (mean ± std) — the same sample the SNR calibration uses, so both axes
+describe identical data. Baseline (clean vs. clean) repeatability = 1.00; mean 714 SIFT
+keypoints per clean image (min 170, max 2,026).
 
 | Distortion | level | repeatability (distorted → restored) | Δ recovery | matching (distorted → restored) |
 |---|---|---|---|---|
-| noise (σ) | 5 | 0.74 → 0.26 | **−0.48** | 0.74 → 0.25 |
-| noise (σ) | 20 | 0.46 → 0.37 | −0.09 | 0.35 → 0.30 |
-| noise (σ) | 80 | 0.21 → 0.21 | 0.00 | 0.10 → 0.11 |
-| blur (σ) | 0.5 | 0.74 → **0.83** | +0.08 | 0.74 → 0.72 |
-| blur (σ) | 1.0 | 0.38 → **0.80** | **+0.42** | 0.35 → **0.72** |
-| blur (σ) | 8.0 | 0.01 → 0.02 | +0.01 | 0.03 → 0.03 |
-| jpeg (q) | 90 | 0.83 → 0.45 | −0.38 | 0.84 → 0.42 |
-| jpeg (q) | 10 | 0.54 → 0.39 | −0.15 | 0.32 → 0.27 |
+| noise (σ) | 5 | 0.77±0.04 → 0.42±0.10 | **−0.35** | 0.75 → 0.41 |
+| noise (σ) | 20 | 0.53±0.05 → 0.41±0.07 | −0.11 | 0.43 → 0.35 |
+| noise (σ) | 80 | 0.24±0.04 → 0.24±0.04 | 0.00 | 0.12 → 0.12 |
+| blur (σ) | 0.5 | 0.77±0.03 → **0.78±0.04** | +0.01 | 0.76 → 0.64 |
+| blur (σ) | 1.0 | 0.45±0.06 → **0.76±0.03** | **+0.31** | 0.40 → **0.67** |
+| blur (σ) | 8.0 | 0.02±0.01 → 0.02±0.01 | +0.00 | 0.04 → 0.05 |
+| jpeg (q) | 90 | 0.86±0.05 → 0.54±0.06 | −0.32 | 0.86 → 0.53 |
+| jpeg (q) | 10 | 0.54±0.03 → 0.45±0.05 | −0.10 | 0.37 → 0.34 |
 
-*Repeatability uses one-to-one keypoint matching (τ = 3 px); seeded run.*
+*Repeatability uses one-to-one keypoint matching (τ = 3 px); mean ± std over 40 seeded
+Oxford-IIIT Pet images. The stds are small relative to the effects — every headline gap
+(denoise −0.35, deblur +0.31, de-JPEG −0.32) is several standard deviations wide.*
 
 <p>
 <img src="assets/keypoints_gaussian_noise.png" width="32%">
@@ -396,18 +401,27 @@ matched cleaner. Baseline (clean vs. clean) repeatability = 1.00.
 <img src="assets/keypoints_jpeg.png" width="32%">
 </p>
 
-*Repeatability vs. intensity for noise / blur / JPEG; each plot shows distorted vs. restored.*
+*Repeatability vs. intensity for noise / blur / JPEG; distorted vs. restored, shaded band = ±1 std.*
 
-Keypoints drawn on the image (`scripts/keypoints_viz.py`): **blur** erases them (559 → 21),
-while **noise** and **JPEG** spawn *spurious* unstable ones (559 → 661 / 678) — which is why
-both repeatability and matching collapse.
+<p>
+<img src="assets/keypoints_matching_gaussian_noise.png" width="32%">
+<img src="assets/keypoints_matching_blur.png" width="32%">
+<img src="assets/keypoints_matching_jpeg.png" width="32%">
+</p>
+
+*Matching score vs. intensity — same pattern as repeatability.*
+
+Keypoints drawn on a sample image (`scripts/keypoints_viz.py`): **blur** erases them
+(290 → 12), while **noise** and **JPEG** spawn *spurious* unstable ones (290 → 362 / 331) —
+which is why both repeatability and matching collapse.
 
 ![Keypoint visualization](assets/keypoints_visual.png)
 
 **Key finding:** the matched cleaner helps only for **blur** (deblur restores repeatability from
-0.38 → 0.80 at σ=1). For **noise** and **JPEG**, classical cleaners (NLM, bilateral) *hurt*
-SIFT — they smooth away the fine texture keypoints sit on. Blind enhancement is not free for
-low-level feature tasks; it trades pixel-level fidelity for lost structure.
+0.45 → 0.76 at σ=1, consistently across all 40 images). For **noise** and **JPEG**, classical
+cleaners (NLM, bilateral) *hurt* SIFT — they smooth away the fine texture keypoints sit on.
+Blind enhancement is not free for low-level feature tasks; it trades pixel-level fidelity for
+lost structure.
 
 ---
 
@@ -416,13 +430,14 @@ low-level feature tasks; it trades pixel-level fidelity for lost structure.
 **Robustness diverges with abstraction level.** Across the same distortions, fragility ranks
 SIFT keypoints (most fragile) → classification → segmentation (most robust). Fine local structure
 is destroyed first; region/shape labels survive longest. At noise σ=80, SIFT repeatability falls to
-0.21 and ResNet-50 to 0.22 Top-1, while segmentation mIoU — though it too drops — holds at 0.63.
+0.24 and ResNet-50 to 0.22 Top-1, while segmentation mIoU — though it too drops — holds at 0.62.
 
 **Blind classical restoration is not free.** The Δ-recovery columns make this concrete: the matched
-cleaner helps only for **blur** (deblur re-adds attenuated high frequencies — repeatability +0.42 at
-σ=1). For **noise** and **JPEG**, NLM and bilateral filtering *smooth away* the exact detail the
-downstream task relies on, so recovery is often **negative** (SIFT −0.48 at σ=5; ResNet-50 −0.23 at
-σ=5). Enhancement tuned for human-visible quality is not tuned for the algorithm consuming it.
+cleaner helps only for **blur** (deblur re-adds attenuated high frequencies — repeatability +0.31 at
+σ=1, mean over 40 images). For **noise** and **JPEG**, NLM and bilateral filtering *smooth away*
+the exact detail the downstream task relies on, so recovery is often **negative** (SIFT −0.35 at
+σ=5; ResNet-50 −0.23 at σ=5). Enhancement tuned for human-visible quality is not tuned for the
+algorithm consuming it.
 
 **Restoration vs. fine-tuning — the headline result.** Fine-tuning the model on distorted data
 **beats restoration decisively**, and the gap is largest exactly where restoration fails — the
@@ -457,8 +472,12 @@ A few things that came up along the way, in case they're useful to anyone repeat
 - First version of the repeatability metric counted a clean keypoint as "repeated" if *any* distorted
   keypoint was nearby. That over-counts when noise spawns clusters of keypoints, so it now uses
   one-to-one matching. The fix lowered the numbers a few points but didn't change any conclusion.
-- Limitations: the aggregate sweeps use a 300-image val subset (the per-breed × intensity sweep
-  uses 2,480 held-out images to make per-class numbers meaningful), SIFT uses one reference
-  image, segmentation is binary (pet/background, though now reported per class), and only
-  classical restorers are implemented — DL restorers (DnCNN, Restormer, FBCNN) are an obvious
-  next step.
+- SIFT originally ran on a single stock photo; it now runs on 40 seeded dataset images with
+  mean ± std. The averages moved a few points (e.g. denoise damage at σ=5 went from −0.48 on
+  the one image to −0.35 ± spread across images) but every conclusion held — and now has a
+  variance estimate behind it.
+- Limitations: the aggregate DL sweeps use a 300-image val subset (the per-breed × intensity
+  sweep uses 2,480 held-out images to make per-class numbers meaningful), no repeated seeds
+  for the fine-tune runs, segmentation is binary (pet/background, though now reported per
+  class), and only classical restorers are implemented — DL restorers (DnCNN, Restormer,
+  FBCNN) are an obvious next step.

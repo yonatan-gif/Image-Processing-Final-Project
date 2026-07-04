@@ -20,7 +20,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.data.pets import load_pets_classification  # noqa: E402
+from src.data.pets import sample_pet_images  # noqa: E402
 from src.distortions import DISTORTIONS  # noqa: E402
 from src.metrics import psnr  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
@@ -33,11 +33,8 @@ def main(n_images: int = 40) -> None:
     results_dir = ROOT / "results"; results_dir.mkdir(exist_ok=True)
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
     seed_everything(cfg["data"]["seed"])
-    ds = load_pets_classification(root=str(ROOT / "data"), download=True)
-
-    rng = np.random.default_rng(0)
-    idxs = rng.choice(len(ds), n_images, replace=False)
-    imgs = [np.asarray(ds[int(i)][0].convert("RGB")) for i in idxs]
+    # Same seeded sample as run_keypoints.py, so SNR values describe the SIFT eval images.
+    imgs = sample_pet_images(root=str(ROOT / "data"), n=n_images)
 
     rows = []
     fig, ax = plt.subplots(figsize=(7, 4))

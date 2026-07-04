@@ -14,11 +14,11 @@ from pathlib import Path
 import cv2
 import matplotlib.pyplot as plt
 import yaml
-from skimage.data import chelsea
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.data.pets import sample_pet_images  # noqa: E402
 from src.distortions import DISTORTIONS  # noqa: E402
 from src.tasks.keypoints import detect_and_describe  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
@@ -37,7 +37,10 @@ def main() -> None:
     ASSETS.mkdir(exist_ok=True)
     cfg = yaml.safe_load((ROOT / "configs/default.yaml").read_text())
     seed_everything(cfg["data"]["seed"])
-    img = chelsea()
+    # First image of the same seeded Pet sample the quantitative sweep uses (drawing the
+    # full sample keeps the seeded order identical to run_keypoints.py).
+    n_images = cfg["tasks"]["keypoints"].get("n_images", 40)
+    img = sample_pet_images(root=str(ROOT / "data"), n=n_images)[0]
 
     panels = []
     vis, n = draw_kps(img)

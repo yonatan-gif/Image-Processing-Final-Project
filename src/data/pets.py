@@ -30,6 +30,19 @@ def subset_split(n: int, subset_size: int, val_frac: float = 0.2, seed: int = 42
     return idx[:cut].tolist(), idx[cut:].tolist()
 
 
+def sample_pet_images(root: str = "data", n: int = 40, seed: int = 0, download: bool = True):
+    """Return `n` seeded RGB uint8 arrays from trainval.
+
+    Shared by the SIFT sweep (run_keypoints.py), its visualization, and the PSNR/SNR
+    calibration (snr_table.py), so keypoint metrics and the SNR table describe the exact
+    same image sample.
+    """
+    ds = load_pets_classification(root=root, download=download)
+    rng = np.random.default_rng(seed)
+    idxs = rng.choice(len(ds), n, replace=False)
+    return [np.asarray(ds[int(i)][0].convert("RGB")) for i in idxs]
+
+
 class PetClsDataset(Dataset):
     """Wrap OxfordIIITPet(category) with an optional numpy image-op before `preprocess`.
 
