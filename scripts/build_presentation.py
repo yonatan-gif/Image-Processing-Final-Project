@@ -44,7 +44,7 @@ def _set(tf, text, size, color, bold=False, align=PP_ALIGN.LEFT):
     r.font.size = Pt(size)
     r.font.bold = bold
     r.font.color.rgb = color
-    r.font.name = "Calibri"
+    r.font.name = "Helvetica"
 
 
 def title_bar(slide, title):
@@ -79,7 +79,7 @@ def bullets(slide, items, left, top, width, height, size=16):
         for r in p.runs:
             r.font.size = Pt(size - 2 * lvl)
             r.font.color.rgb = DARK
-            r.font.name = "Calibri"
+            r.font.name = "Helvetica"
     return box
 
 
@@ -129,7 +129,7 @@ for i, line in enumerate([
 ]):
     p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
     p.text = line
-    r = p.runs[0]; r.font.size = Pt(18 if i < 2 else 15); r.font.color.rgb = WHITE; r.font.name = "Calibri"
+    r = p.runs[0]; r.font.size = Pt(18 if i < 2 else 15); r.font.color.rgb = WHITE; r.font.name = "Helvetica"
     p.space_after = Pt(6)
 _n[0] = 1
 
