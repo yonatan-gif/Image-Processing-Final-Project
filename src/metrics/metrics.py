@@ -27,6 +27,20 @@ def psnr(clean: np.ndarray, distorted: np.ndarray) -> float:
     return float("inf") if mse == 0 else float(10 * np.log10(255.0 ** 2 / mse))
 
 
+def snr(clean: np.ndarray, distorted: np.ndarray) -> float:
+    """Signal-to-noise ratio (dB): image signal power over distortion power.
+
+    SNR = 10 log10( mean(clean^2) / MSE ). Unlike PSNR (numerator fixed at the 255^2 peak),
+    SNR uses the image's actual mean-square energy, so it accounts for how bright/energetic
+    the image is. For additive Gaussian noise MSE ≈ sigma^2 (before clipping), so this
+    approximates the classical input SNR = 10 log10(mean(I^2)/sigma^2).
+    """
+    clean = clean.astype(np.float64)
+    mse = np.mean((clean - distorted.astype(np.float64)) ** 2)
+    signal = np.mean(clean ** 2)
+    return float("inf") if mse == 0 else float(10 * np.log10(signal / mse))
+
+
 def mean_iou(pred_mask: np.ndarray, gt_mask: np.ndarray, num_classes: int = 2) -> float:
     """Segmentation: mean IoU across classes (per-image helper).
 

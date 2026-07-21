@@ -165,8 +165,8 @@ figure(s, ASSETS / "eda_samples.png", top_in=3.1, bottom_in=6.9)
 # ---------------------------------------------------------------- Slide 5: distortions + SNR
 s = new_slide("Distortions and Measured SNR")
 bullets(s, [
-    "Each intensity level mapped to a physical SNR (mean PSNR over 40 images).",
-    "Noise: 34 → 12 dB   ·   Blur: 39 → 22 dB   ·   JPEG: 39 → 27 dB.",
+    "Each intensity level mapped to a physical SNR (mean over 40 images; PSNR ≈ +6 dB, reported alongside).",
+    "SNR:  Noise 28 → 6 dB   ·   Blur 32 → 16 dB   ·   JPEG 33 → 21 dB.",
     "Rows below: clean → weak → mid → strong → restored (matched cleaner).",
 ], Inches(0.6), Inches(1.4), Inches(12.1), Inches(1.6), size=16)
 figure(s, ASSETS / "distortion_grid.png", top_in=3.1, bottom_in=6.9)
