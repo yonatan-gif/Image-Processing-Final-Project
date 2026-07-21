@@ -55,8 +55,7 @@ the cases where they don't.
 | **Distortion 3** | [JPEG compression](https://ieeexplore.ieee.org/document/125072) | Intensity = quality factor; blocky 8×8 DCT artifacts. |
 | **Metrics axes** | per **class** AND per **intensity (SNR)** | Required two-axis reporting; plus before/after grids and curves. |
 
-**Requirement check:** 2 high-level DL tasks + 1 low-level classical task ✔ · ≥3 distortions ✔ ·
-dataset with GT ✔ · ≥1 DL model ✔ · low + high level mix ✔.
+
 
 ---
 
