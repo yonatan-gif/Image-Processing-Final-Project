@@ -236,25 +236,7 @@ python scripts/make_figures.py                  # regenerate all CPU report figu
 
 ---
 
-## 8. Progress vs. course weekly plan
-
-| Week | Deliverable | Status |
-|---|---|---|
-| 1 | Open Git repo + register | ✔ repo · *register in course table (manual)* |
-| 2 | Dataset/distortions/tasks table with links | ✔ §1 |
-| 3 | Methods/enhancements table with links | ✔ §2 |
-| 4 | Download + EDA + annotated grid | ✔ §3, `scripts/eda.py` |
-| 5–6 | Run on clean data + measure (per class) | ✔ all 3 tasks (cls 0.93, seg 0.92, SIFT) |
-| 7 | Apply distortions + before/after | ✔ `src/distortions`, grids |
-| 8 | Measure degradation | ✔ all 3 tasks |
-| 9 | Apply enhancements + measure | ✔ all 3 tasks |
-| 10–11 | Fine-tune + measure | ✔ classification + segmentation (improvement #2) |
-| 12 | Polish README (de-AI pass) | ✔ voice + docstring pass |
-| 13 | PPT/PDF + final repo review | ◻ (slide draft in `docs/SLIDES.md`) |
-
----
-
-## 9. Results
+## 8. Results
 
 ### Distortions + matched restoration (qualitative)
 
@@ -484,7 +466,7 @@ so σ̂ tracks the *effective* noise in the saved image, which is arguably the r
 The blind cleaner is then three lines (`denoise_blind`): estimate σ̂, set h = 0.8·σ̂, run NLM.
 While implementing we also found and fixed a channel-order bug — OpenCV's colored NLM assumes
 BGR input and we had been passing RGB — so the fixed-dose arm below is re-measured with the
-corrected implementation (the §9 tables above are kept unchanged as the original record; the
+corrected implementation (the §8 tables above are kept unchanged as the original record; the
 differences are small).
 
 **Results** ([`scripts/run_noise_fairness.py`](scripts/run_noise_fairness.py); same frozen
@@ -558,7 +540,7 @@ checkpoints, same val sets, noise only):
 
 ---
 
-## 10. Discussion
+## 9. Discussion
 
 **Robustness diverges with abstraction level.** Across the same distortions, fragility ranks
 SIFT keypoints (most fragile) → classification → segmentation (most robust). Fine local structure
@@ -587,7 +569,7 @@ At mild distortion the model is already robust so all three agree; at severe dis
 adds nothing while fine-tuning recovers most of the loss.
 
 **The post-hoc fairness check refines this.** The table above uses the fixed-dose cleaners; the
-blind self-calibrating protocol (§9 fairness check) shows the verdict splits by task type. For
+blind self-calibrating protocol (§8 fairness check) shows the verdict splits by task type. For
 texture-driven tasks the conclusion survives the fair fight: correctly-dosed denoising still
 loses to the distorted input (classification up to σ=40, SIFT everywhere), and fine-tuning stays
 decisively ahead. For shape-driven segmentation it does not: correct dosing at σ=80 recovers
@@ -603,7 +585,7 @@ recovers most of the fine-tuning gain.
 
 ---
 
-## 11. Notes from building this
+## 10. Notes from building this
 
 A few things that came up along the way, in case they're useful to anyone repeating the experiment:
 
