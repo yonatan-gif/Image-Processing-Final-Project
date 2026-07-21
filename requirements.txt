@@ -12,3 +12,4 @@ torchvision>=0.16
 opencv-contrib-python>=4.8   # contrib = SIFT available
 pillow>=10.0
 scikit-learn>=1.3
+python-pptx>=1.0
