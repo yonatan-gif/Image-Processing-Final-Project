@@ -8,8 +8,7 @@ This README is the report — design decisions and references, the experiment se
 result tables, before/after grids, and degradation/recovery curves are here. Everything was run on
 a MacBook (Apple MPS); a free Colab T4 reproduces it.
 
-**📊 Final presentation:** [`docs/Robustness_of_Vision_Models_to_Distortions.pptx`](docs/Robustness_of_Vision_Models_to_Distortions.pptx)
-(16 slides). GitHub doesn't preview PowerPoint in the browser — click the file, then **Download**, and open it in PowerPoint or Keynote.
+**📊 Final presentation:** [`docs/Robustness_of_Vision_Models_to_Distortions.pptx`](docs/Robustness_of_Vision_Models_to_Distortions.pptx) (16 slides).
 
 ---
 
