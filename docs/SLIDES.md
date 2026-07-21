@@ -31,7 +31,7 @@ Yonatan Haba · [github.com/yonatan-gif/Image-Processing-Final-Project](https://
 - Figure: `assets/eda_samples.png`
 
 ## Slide 5 — Distortions and measured SNR
-- Each knob → measured PSNR (noise σ 5→80 = 34→12 dB; blur 0.5→8 = 39→22 dB; JPEG 90→10 = 39→27 dB).
+- Each knob → measured SNR (noise σ 5→80 = 28→6 dB; blur 0.5→8 = 32→16 dB; JPEG 90→10 = 33→21 dB); PSNR ≈ +6 dB, reported alongside.
 - Figures: `assets/distortion_grid.png`, `assets/snr_levels.png`
 
 ## Slide 6 — Method: experiment design
